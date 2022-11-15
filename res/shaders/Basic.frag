@@ -15,9 +15,6 @@ vec4 diffuseColor = vec4(0.9, 0.9, 0.9, 1.);
 void main() {
     vec4 baseColor = texture(textureBase, texCoords);
 
-    if (texCoords.x > 0.25 && texCoords.x < 0.75 && texCoords.y > 0.25 && texCoords.y < 0.75)
-    baseColor = vec4(1.f, 0.f, 0.f, 1.f);
-
     vec4 textureColor = texture(textureNormal, texCoords);
     // Tangent space
     vec3 normal = textureColor.rgb * 2.f - 1.f;

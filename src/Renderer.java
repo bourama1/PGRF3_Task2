@@ -1,4 +1,4 @@
-import lwjglutils.OGLBuffers;
+import lwjglutils.OGLModelOBJ;
 import lwjglutils.OGLRenderTarget;
 import lwjglutils.OGLTexture2D;
 import lwjglutils.ShaderUtils;
@@ -6,10 +6,7 @@ import org.lwjgl.BufferUtils;
 import org.lwjgl.glfw.GLFWCursorPosCallback;
 import org.lwjgl.glfw.GLFWMouseButtonCallback;
 import org.lwjgl.glfw.GLFWScrollCallback;
-import transforms.Camera;
-import transforms.Mat4;
-import transforms.Mat4PerspRH;
-import transforms.Vec3D;
+import transforms.*;
 
 import java.io.IOException;
 import java.nio.DoubleBuffer;
@@ -18,19 +15,20 @@ import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL33.*;
 
 public class Renderer extends AbstractRenderer {
-    private int shaderProgram;
-    private int shaderProgramPost;
+    private int shaderProgram, shaderProgramPost, shaderProgramEleph;
     private Grid grid, gridPost;
 
     private Camera camera;
-    private Mat4 projection;
     private OGLTexture2D textureBase;
     private OGLTexture2D textureNormal;
     private boolean mouseButton1;
     private double ox, oy;
+    private Mat4 projection;
 
     // PostProcessing
     private OGLRenderTarget renderTarget;
+    private OGLTexture2D.Viewer viewer;
+    private OGLModelOBJ model;
 
     @Override
     public void init() {
@@ -43,23 +41,23 @@ public class Renderer extends AbstractRenderer {
                 .withZenith(Math.PI * -0.125)
                 .withFirstPerson(false)
                 .withRadius(3);
-        projection = new Mat4PerspRH(Math.PI / 3, 600 / (float) 800, 0.1f, 50.f);
+        projection = new Mat4PerspRH(Math.PI / 3, 600 / (float) 800, 0.1f, 1000.f);
 
         shaderProgram = ShaderUtils.loadProgram("/shaders/Basic");
         shaderProgramPost = ShaderUtils.loadProgram("/shaders/Post");
-        glUseProgram(shaderProgram);
+        shaderProgramEleph = ShaderUtils.loadProgram("/shaders/Elephant");
+        glUseProgram(shaderProgramEleph);
 
         // Color
         int loc_uColorR = glGetUniformLocation(shaderProgram, "u_ColorR");
         glUniform1f(loc_uColorR, 1.f);
-        // Proj
-        int loc_uProj = glGetUniformLocation(shaderProgram, "u_Proj");
-        glUniformMatrix4fv(loc_uProj, false, projection.floatArray());
 
         grid = new Grid(20, 20);
         gridPost = new Grid(2, 2);
 
         renderTarget = new OGLRenderTarget(800, 600);
+        viewer = new OGLTexture2D.Viewer();
+        model = new OGLModelOBJ("/obj/ElephantBody.obj");
 
         try {
             textureBase = new OGLTexture2D("./textures/mosaic.jpg");
@@ -71,15 +69,52 @@ public class Renderer extends AbstractRenderer {
 
     @Override
     public void display() {
-        renderMain();
-        renderPost();
+        //renderMain();
+        renderElephantBody();
+        //renderPost();
+        //renderTexturesView();
     }
+
+    private void renderTexturesView() {
+        viewer.view(textureBase, -1, -1, 0.5);
+        viewer.view(textureNormal, -1, -0.5, 0.5);
+        viewer.view(renderTarget.getColorTexture(), -1, 0, 0.5);
+        viewer.view(renderTarget.getDepthTexture(), -1, 0.5, 0.5);
+    }
+
+    private void renderElephantBody() {
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+        glUseProgram(shaderProgramEleph);
+
+        // Model
+        Mat4 transf = new Mat4Identity();
+        transf = transf.mul(new Mat4RotY(Math.PI));
+        transf = transf.mul(new Mat4Scale(0.1f));
+        int loc_uModel = glGetUniformLocation(shaderProgramEleph, "u_Model");
+        glUniformMatrix4fv(loc_uModel, false, transf.floatArray());
+
+        // Proj
+        int loc_uProj = glGetUniformLocation(shaderProgramEleph, "u_Proj");
+        glUniformMatrix4fv(loc_uProj, false, projection.floatArray());
+
+        // View
+        int loc_uView = glGetUniformLocation(shaderProgramEleph, "u_View");
+        glUniformMatrix4fv(loc_uView, false, camera.getViewMatrix().floatArray());
+
+        model.getBuffers().draw(GL_TRIANGLES, shaderProgramEleph);
+    }
+
     public void renderMain(){
-        // Vykresluj do textury
+        // Vykresluj do texture
         renderTarget.bind();
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         glUseProgram(shaderProgram);
+
+        // Proj
+        int loc_uProj = glGetUniformLocation(shaderProgram, "u_Proj");
+        glUniformMatrix4fv(loc_uProj, false, projection.floatArray());
 
         // View
         int loc_uView = glGetUniformLocation(shaderProgram, "u_View");
@@ -88,9 +123,10 @@ public class Renderer extends AbstractRenderer {
         textureBase.bind(shaderProgram, "textureBase", 0);
         textureNormal.bind(shaderProgram, "textureNormal", 1);
         grid.getBuffers().draw(GL_TRIANGLES, shaderProgram);
-    };
+    }
+
     public void renderPost(){
-        // Zase vykresluj na obrazovku
+        // Vykresluj na obrazovku
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
         glUseProgram(shaderProgramPost);
@@ -98,23 +134,23 @@ public class Renderer extends AbstractRenderer {
         // Načíst texturu z render targetu
         renderTarget.getColorTexture().bind(shaderProgramPost, "textureBase", 0);
 
-        // Render quadu přes obrazovku
+        // Render quad přes obrazovku
         gridPost.getBuffers().draw(GL_TRIANGLES, shaderProgramPost);
-    };
+    }
 
-    private GLFWCursorPosCallback cpCallbacknew = new GLFWCursorPosCallback() {
+    private final GLFWCursorPosCallback cpCallbacknew = new GLFWCursorPosCallback() {
         @Override
         public void invoke(long window, double x, double y) {
             if (mouseButton1) {
-                camera = camera.addAzimuth((double) Math.PI * (ox - x) / 800)
-                        .addZenith((double) Math.PI * (oy - y) / 800);
+                camera = camera.addAzimuth(Math.PI * (ox - x) / 800)
+                        .addZenith(Math.PI * (oy - y) / 800);
                 ox = x;
                 oy = y;
             }
         }
     };
 
-    private GLFWMouseButtonCallback mbCallback = new GLFWMouseButtonCallback () {
+    private final GLFWMouseButtonCallback mbCallback = new GLFWMouseButtonCallback () {
         @Override
         public void invoke(long window, int button, int action, int mods) {
             mouseButton1 = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_1) == GLFW_PRESS;
@@ -135,15 +171,15 @@ public class Renderer extends AbstractRenderer {
                 glfwGetCursorPos(window, xBuffer, yBuffer);
                 double x = xBuffer.get(0);
                 double y = yBuffer.get(0);
-                camera = camera.addAzimuth((double) Math.PI * (ox - x) / 800)
-                        .addZenith((double) Math.PI * (oy - y) / 800);
+                camera = camera.addAzimuth(Math.PI * (ox - x) / 800)
+                        .addZenith(Math.PI * (oy - y) / 800);
                 ox = x;
                 oy = y;
             }
         }
     };
 
-    private GLFWScrollCallback scrollCallback = new GLFWScrollCallback() {
+    private final GLFWScrollCallback scrollCallback = new GLFWScrollCallback() {
         @Override
         public void invoke(long window, double dx, double dy) {
             if (dy < 0)
