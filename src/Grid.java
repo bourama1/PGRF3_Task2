@@ -1,8 +1,7 @@
 import lwjglutils.OGLBuffers;
 
-import java.sql.SQLOutput;
-
 public class Grid {
+    private final OGLBuffers buffers;
 
     /**
      * GL_TRIANGLES
@@ -10,8 +9,6 @@ public class Grid {
      * @param m vertex count in row
      * @param n vertex count in column
      */
-    private OGLBuffers buffers;
-
     public Grid(final int m, final int n) {
         float[] vertices = new float[2 * m * n];
         int[] indices = new int[3 * 2 * (m - 1) * (n - 1)];
@@ -65,11 +62,11 @@ public class Grid {
         }
 
 
-        OGLBuffers.Attrib[] attribs = new OGLBuffers.Attrib[] {
+        OGLBuffers.Attrib[] attrs = new OGLBuffers.Attrib[] {
                 new OGLBuffers.Attrib("inPosition", 2),
         };
 
-        buffers = new OGLBuffers(vertices, attribs, indices);
+        buffers = new OGLBuffers(vertices, attrs, indices);
 
     }
 

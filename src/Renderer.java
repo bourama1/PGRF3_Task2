@@ -90,7 +90,7 @@ public class Renderer extends AbstractRenderer {
         // Model
         Mat4 transf = new Mat4Identity();
         transf = transf.mul(new Mat4RotY(Math.PI));
-        transf = transf.mul(new Mat4Scale(0.1f));
+        transf = transf.mul(new Mat4Scale(0.02f));
         int loc_uModel = glGetUniformLocation(shaderProgramEleph, "u_Model");
         glUniformMatrix4fv(loc_uModel, false, transf.floatArray());
 
