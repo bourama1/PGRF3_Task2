@@ -1,7 +1,4 @@
-import lwjglutils.OGLModelOBJ;
-import lwjglutils.OGLRenderTarget;
-import lwjglutils.OGLTexture2D;
-import lwjglutils.ShaderUtils;
+import lwjglutils.*;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.glfw.GLFWCursorPosCallback;
 import org.lwjgl.glfw.GLFWMouseButtonCallback;
@@ -15,25 +12,19 @@ import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL33.*;
 
 public class Renderer extends AbstractRenderer {
-    private int shaderProgram, shaderProgramPost, shaderProgramEleph;
-    private Grid grid, gridPost;
-
+    private int shaderProgram;
+    private Grid grid;
     private Camera camera;
-    private OGLTexture2D textureBase;
-    private OGLTexture2D textureNormal;
     private boolean mouseButton1;
     private double ox, oy;
     private Mat4 projection;
-
-    // PostProcessing
-    private OGLRenderTarget renderTarget;
-    private OGLTexture2D.Viewer viewer;
-    private OGLModelOBJ model;
+    private OGLBuffers pointBuffer;
 
     @Override
     public void init() {
         //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         glEnable(GL_DEPTH_TEST);
+        glPointSize(10.f);
 
         camera = new Camera()
                 .withPosition(new Vec3D(0.f, 0f, 0f))
@@ -43,71 +34,32 @@ public class Renderer extends AbstractRenderer {
                 .withRadius(3);
         projection = new Mat4PerspRH(Math.PI / 3, 600 / (float) 800, 0.1f, 1000.f);
 
-        shaderProgram = ShaderUtils.loadProgram("/shaders/Basic");
-        shaderProgramPost = ShaderUtils.loadProgram("/shaders/Post");
-        shaderProgramEleph = ShaderUtils.loadProgram("/shaders/Elephant");
-        glUseProgram(shaderProgramEleph);
+        shaderProgram = ShaderUtils.loadProgram("/shaders/Geo");
+        glUseProgram(shaderProgram);
 
-        // Color
-        int loc_uColorR = glGetUniformLocation(shaderProgram, "u_ColorR");
-        glUniform1f(loc_uColorR, 1.f);
+        //Vertices
+        float[] vertices = {
+                0.f,0.f,0.f
+        };
 
-        grid = new Grid(20, 20);
-        gridPost = new Grid(2, 2);
+        //Indices
+        int[] indices = {
+                0
+        };
 
-        renderTarget = new OGLRenderTarget(800, 600);
-        viewer = new OGLTexture2D.Viewer();
-        model = new OGLModelOBJ("/obj/ElephantBody.obj");
-
-        try {
-            textureBase = new OGLTexture2D("./textures/mosaic.jpg");
-            textureNormal = new OGLTexture2D("./textures/bricksn.png");
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        //OGLBuffers
+        OGLBuffers.Attrib[] attributes = new OGLBuffers.Attrib[] {
+                new OGLBuffers.Attrib("inPosition", 3),
+        };
+        pointBuffer = new OGLBuffers(vertices, attributes, indices);
     }
 
     @Override
     public void display() {
-        //renderMain();
-        renderElephantBody();
-        //renderPost();
-        //renderTexturesView();
-    }
-
-    private void renderTexturesView() {
-        viewer.view(textureBase, -1, -1, 0.5);
-        viewer.view(textureNormal, -1, -0.5, 0.5);
-        viewer.view(renderTarget.getColorTexture(), -1, 0, 0.5);
-        viewer.view(renderTarget.getDepthTexture(), -1, 0.5, 0.5);
-    }
-
-    private void renderElephantBody() {
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-        glUseProgram(shaderProgramEleph);
-
-        // Model
-        Mat4 transf = new Mat4Identity();
-        transf = transf.mul(new Mat4RotY(Math.PI));
-        transf = transf.mul(new Mat4Scale(0.02f));
-        int loc_uModel = glGetUniformLocation(shaderProgramEleph, "u_Model");
-        glUniformMatrix4fv(loc_uModel, false, transf.floatArray());
-
-        // Proj
-        int loc_uProj = glGetUniformLocation(shaderProgramEleph, "u_Proj");
-        glUniformMatrix4fv(loc_uProj, false, projection.floatArray());
-
-        // View
-        int loc_uView = glGetUniformLocation(shaderProgramEleph, "u_View");
-        glUniformMatrix4fv(loc_uView, false, camera.getViewMatrix().floatArray());
-
-        model.getBuffers().draw(GL_TRIANGLES, shaderProgramEleph);
+        renderMain();
     }
 
     public void renderMain(){
-        // Vykresluj do texture
-        renderTarget.bind();
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         glUseProgram(shaderProgram);
@@ -120,22 +72,7 @@ public class Renderer extends AbstractRenderer {
         int loc_uView = glGetUniformLocation(shaderProgram, "u_View");
         glUniformMatrix4fv(loc_uView, false, camera.getViewMatrix().floatArray());
 
-        textureBase.bind(shaderProgram, "textureBase", 0);
-        textureNormal.bind(shaderProgram, "textureNormal", 1);
-        grid.getBuffers().draw(GL_TRIANGLES, shaderProgram);
-    }
-
-    public void renderPost(){
-        // Vykresluj na obrazovku
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-        glUseProgram(shaderProgramPost);
-
-        // Načíst texturu z render targetu
-        renderTarget.getColorTexture().bind(shaderProgramPost, "textureBase", 0);
-
-        // Render quad přes obrazovku
-        gridPost.getBuffers().draw(GL_TRIANGLES, shaderProgramPost);
+        pointBuffer.draw(GL_POINTS, shaderProgram);
     }
 
     private final GLFWCursorPosCallback cpCallbacknew = new GLFWCursorPosCallback() {
