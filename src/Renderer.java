@@ -1,3 +1,4 @@
+import lwjglutils.ShaderUtils;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.glfw.GLFWCursorPosCallback;
 import org.lwjgl.glfw.GLFWKeyCallback;
@@ -11,13 +12,16 @@ import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL33.*;
 
 public class Renderer extends AbstractRenderer {
-    private int shaderProgram;
+    private int geoShaderProgram;
     private Camera camera;
     private boolean mouseButton1;
     private double ox, oy;
     private Mat4 projection;
     private Mat4 model = new Mat4Identity();
     private GBuffer gBuffer;
+    private Grid grid;
+    private int loc_uLightSource;
+    private float lightSourceX = 0.f, lightSourceY = 0.f, lightSourceZ = 1.f;
 
     @Override
     public void init() {
@@ -34,25 +38,15 @@ public class Renderer extends AbstractRenderer {
         projection = new Mat4PerspRH(Math.PI / 3, HEIGHT / (float) WIDTH, 0.1f, 1000.f);
 
         gBuffer = new GBuffer();
+        grid = new Grid(10,10);
+
+        //Shaders
+        this.geoShaderProgram = ShaderUtils.loadProgram("/shaders/deferredShading/GeometryPass");
+        glUseProgram(geoShaderProgram);
     }
 
     @Override
     public void display() {
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glViewport(0, 0, WIDTH, HEIGHT);
-
-        // Proj
-        int loc_uProj = glGetUniformLocation(shaderProgram, "u_Proj");
-        glUniformMatrix4fv(loc_uProj, false, projection.floatArray());
-
-        // View
-        int loc_uView = glGetUniformLocation(shaderProgram, "u_View");
-        glUniformMatrix4fv(loc_uView, false, camera.getViewMatrix().floatArray());
-
-        // View
-        int loc_uModel = glGetUniformLocation(shaderProgram, "u_Model");
-        glUniformMatrix4fv(loc_uModel, false, model.floatArray());
-
         renderGeometry();
         renderLighting();
     }
@@ -60,8 +54,32 @@ public class Renderer extends AbstractRenderer {
     private void renderGeometry() {
         // Render G-Buffer for writing
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, gBuffer.getGBufferId());
-
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glViewport(0, 0, WIDTH, HEIGHT);
         glDisable(GL_BLEND);
+
+        glUseProgram(geoShaderProgram);
+
+        // Proj
+        int loc_uProj = glGetUniformLocation(geoShaderProgram, "u_Proj");
+        glUniformMatrix4fv(loc_uProj, false, projection.floatArray());
+
+        // View
+        int loc_uView = glGetUniformLocation(geoShaderProgram, "u_View");
+        glUniformMatrix4fv(loc_uView, false, camera.getViewMatrix().floatArray());
+
+        // View
+        int loc_uModel = glGetUniformLocation(geoShaderProgram, "u_Model");
+        glUniformMatrix4fv(loc_uModel, false, model.floatArray());
+
+        // Light Source
+        loc_uLightSource = glGetUniformLocation(geoShaderProgram, "u_LightSource");
+        glUniform3f(loc_uLightSource, lightSourceX, lightSourceY, lightSourceZ);
+
+        grid.getBuffers().draw(GL_TRIANGLE_STRIP, geoShaderProgram);
+
+        glBindVertexArray(0);
+        glEnable(GL_BLEND);
     }
 
     private void renderLighting() {
