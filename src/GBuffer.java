@@ -46,7 +46,7 @@ public class GBuffer {
 
         try (MemoryStack stack = MemoryStack.stackPush()) {
             IntBuffer intBuff = stack.mallocInt(TOTAL_TEXTURES);
-            int[] values = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3, GL_COLOR_ATTACHMENT4, GL_COLOR_ATTACHMENT5};
+            int[] values = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3};
             for (int value : values) {
                 intBuff.put(value);
             }
