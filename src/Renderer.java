@@ -22,7 +22,7 @@ public class Renderer extends AbstractRenderer {
 
     @Override
     public void init() {
-        //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         glEnable(GL_DEPTH_TEST);
         glPointSize(10.f);
 
@@ -34,7 +34,7 @@ public class Renderer extends AbstractRenderer {
                 .withRadius(3);
         projection = new Mat4PerspRH(Math.PI / 3, 600 / (float) 800, 0.1f, 1000.f);
 
-        shaderProgram = ShaderUtils.loadProgram("/shaders/Geo");
+        shaderProgram = ShaderUtils.loadProgram("/shaders/forwardShading/Geo");
         glUseProgram(shaderProgram);
 
         //Vertices
