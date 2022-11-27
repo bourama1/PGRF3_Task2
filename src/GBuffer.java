@@ -1,13 +1,15 @@
+import org.lwjgl.opengl.GL30;
 import org.lwjgl.system.MemoryStack;
 
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
+import java.util.Arrays;
 
-import static Utils.Const.HEIGHT;
-import static Utils.Const.WIDTH;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL20.glDrawBuffers;
 import static org.lwjgl.opengl.GL30.*;
+import static utils.Const.HEIGHT;
+import static utils.Const.WIDTH;
 
 public class GBuffer {
 
@@ -46,15 +48,12 @@ public class GBuffer {
 
         try (MemoryStack stack = MemoryStack.stackPush()) {
             IntBuffer intBuff = stack.mallocInt(TOTAL_TEXTURES);
-            int[] values = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3};
-            for (int value : values) {
-                intBuff.put(value);
+            for (int i = 0; i < TOTAL_TEXTURES; i++) {
+                intBuff.put(i, GL_COLOR_ATTACHMENT0 + i);
             }
-            intBuff.flip();
             glDrawBuffers(intBuff);
         }
 
-        // Unbind
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
@@ -71,16 +70,11 @@ public class GBuffer {
     }
 
     public int getDepthTexture() {
-        return textureIds[TOTAL_TEXTURES-1];
+        return textureIds[TOTAL_TEXTURES - 1];
     }
 
     public void cleanUp() {
         glDeleteFramebuffers(gBufferId);
-
-        if (textureIds != null) {
-            for (int i=0; i<TOTAL_TEXTURES; i++) {
-                glDeleteTextures(textureIds[i]);
-            }
-        }
+        Arrays.stream(textureIds).forEach(GL30::glDeleteTextures);
     }
 }

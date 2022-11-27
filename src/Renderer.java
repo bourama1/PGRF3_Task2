@@ -1,18 +1,12 @@
-import lwjglutils.OGLBuffers;
-import lwjglutils.ShaderUtils;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.glfw.GLFWCursorPosCallback;
 import org.lwjgl.glfw.GLFWKeyCallback;
 import org.lwjgl.glfw.GLFWMouseButtonCallback;
 import org.lwjgl.glfw.GLFWScrollCallback;
-import transforms.Camera;
-import transforms.Mat4;
-import transforms.Mat4PerspRH;
-import transforms.Vec3D;
-
+import transforms.*;
 import java.nio.DoubleBuffer;
 
-import static Utils.Const.*;
+import static utils.Const.*;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL33.*;
 
@@ -22,7 +16,8 @@ public class Renderer extends AbstractRenderer {
     private boolean mouseButton1;
     private double ox, oy;
     private Mat4 projection;
-    private OGLBuffers pointBuffer;
+    private Mat4 model = new Mat4Identity();
+    private GBuffer gBuffer;
 
     @Override
     public void init() {
@@ -38,35 +33,13 @@ public class Renderer extends AbstractRenderer {
                 .withRadius(3);
         projection = new Mat4PerspRH(Math.PI / 3, HEIGHT / (float) WIDTH, 0.1f, 1000.f);
 
-        shaderProgram = ShaderUtils.loadProgram("/shaders/forwardShading/Geo");
-        glUseProgram(shaderProgram);
-
-        //Vertices
-        float[] vertices = {
-                0.f,0.f,0.f
-        };
-
-        //Indices
-        int[] indices = {
-                0
-        };
-
-        //OGLBuffers
-        OGLBuffers.Attrib[] attributes = new OGLBuffers.Attrib[] {
-                new OGLBuffers.Attrib("inPosition", 3),
-        };
-        pointBuffer = new OGLBuffers(vertices, attributes, indices);
+        gBuffer = new GBuffer();
     }
 
     @Override
     public void display() {
-        renderMain();
-    }
-
-    public void renderMain(){
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        glUseProgram(shaderProgram);
+        glViewport(0, 0, WIDTH, HEIGHT);
 
         // Proj
         int loc_uProj = glGetUniformLocation(shaderProgram, "u_Proj");
@@ -76,7 +49,22 @@ public class Renderer extends AbstractRenderer {
         int loc_uView = glGetUniformLocation(shaderProgram, "u_View");
         glUniformMatrix4fv(loc_uView, false, camera.getViewMatrix().floatArray());
 
-        pointBuffer.draw(GL_POINTS, shaderProgram);
+        // View
+        int loc_uModel = glGetUniformLocation(shaderProgram, "u_Model");
+        glUniformMatrix4fv(loc_uModel, false, model.floatArray());
+
+        renderGeometry();
+        renderLighting();
+    }
+
+    private void renderGeometry() {
+        // Render G-Buffer for writing
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, gBuffer.getGBufferId());
+
+        glDisable(GL_BLEND);
+    }
+
+    private void renderLighting() {
     }
 
     /**
