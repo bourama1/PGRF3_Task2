@@ -83,6 +83,19 @@ public class Renderer extends AbstractRenderer {
     }
 
     private void renderLighting() {
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glViewport(0, 0, WIDTH, HEIGHT);
+
+        glEnable(GL_BLEND);
+        glBlendEquation(GL_FUNC_ADD);
+        glBlendFunc(GL_ONE, GL_ONE);
+
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, gBuffer.getGBufferId());
+
+        //TODO
+
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     }
 
     /**

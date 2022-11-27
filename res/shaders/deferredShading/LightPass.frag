@@ -2,6 +2,8 @@
 
 out vec4 fragColor;
 
+in vec2 outTextCoord;
+
 struct Attenuation
 {
     float constant;

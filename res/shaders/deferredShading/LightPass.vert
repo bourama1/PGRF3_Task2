@@ -1,13 +1,12 @@
 #version 330
 
-layout (location=0) in vec3 position;
+layout (location=0) in vec3 inPos;
+layout (location=1) in vec2 inCoord;
 
-//uniform mat4 u_View;
-uniform mat4 u_Proj;
-uniform mat4 u_Model;
+out vec2 outTextCoord;
 
 void main()
 {
-    //gl_Position = u_Proj * u_View * u_Model * vec4(position, 1.0);
-    gl_Position = u_Proj * u_Model * vec4(position, 1.0);
+    outTextCoord = inCoord;
+    gl_Position = vec4(inPos, 1.0f);
 }
