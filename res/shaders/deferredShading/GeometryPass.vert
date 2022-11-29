@@ -1,8 +1,8 @@
 #version 330
 
-in vec3 inPosition;
-in vec3 texCoordsObj;
-in vec3 normalObj;
+layout (location = 0) in vec4 inPosition;
+layout (location = 1) in vec2 inTexCoord;
+layout (location = 2) in vec3 inNormal;
 
 out vec2 texCoords;
 out vec3 viewVec;
@@ -22,7 +22,7 @@ const float delta = 0.001f;
 */
 vec3 posCalc(vec3 inPosition) {
     switch(u_Obj) {
-            case 2: return vec3(u_LightSource.x + ((inPosition.x - 0.5f) / 4), u_LightSource.y + ((inPosition.y - 0.5f) / 4), u_LightSource.z);
+        case 2: return vec3(u_LightSource.x + ((inPosition.x - 0.5f) / 4), u_LightSource.y + ((inPosition.y - 0.5f) / 4), u_LightSource.z);
     }
     return inPosition;
 }
@@ -45,30 +45,30 @@ mat3 getTBN(vec3 inPos) {
 void main() {
     if(u_Obj == 1){
         //Texture
-        texCoords = texCoordsObj.xy;
+        texCoords = inTexCoord;
 
         //Object position
-        vec4 worldPos = u_Model * vec4(posCalc(inPosition), 1.f);
+        vec4 worldPos = u_Model * vec4(posCalc(inPosition.xyz), 1.f);
         vec4 viewPos = u_View * worldPos;
         vec3 viewDirection = normalize(-viewPos.xyz);
 
         //TBN
-        mat3 tbn = getTBN(inPosition);
+        mat3 tbn = getTBN(inPosition.xyz);
         viewVec = transpose(tbn) * viewDirection;
 
-        normal = normalObj;
+        normal = normalize(inNormal);
         gl_Position = u_Proj * viewPos;
     } else {
         //Texture
         texCoords = inPosition.xy;
 
         //Object position
-        vec4 worldPos = u_Model * vec4(posCalc(inPosition), 1.f);
+        vec4 worldPos = u_Model * vec4(posCalc(inPosition.xyz), 1.f);
         vec4 viewPos = u_View * worldPos;
         vec3 viewDirection = normalize(-viewPos.xyz);
 
         //TBN
-        mat3 tbn = getTBN(inPosition);
+        mat3 tbn = getTBN(inPosition.xyz);
         viewVec = transpose(tbn) * viewDirection;
 
         gl_Position = u_Proj * viewPos;

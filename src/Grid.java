@@ -15,7 +15,7 @@ public class Grid {
         createIB(m, n);
 
         OGLBuffers.Attrib[] attrs = new OGLBuffers.Attrib[]{
-                new OGLBuffers.Attrib("inPosition", 3),
+                new OGLBuffers.Attrib("inPosition", 4),
         };
 
         this.buffers = new OGLBuffers(vertices, attrs, indices);
@@ -27,7 +27,7 @@ public class Grid {
      *          Creates a new vertex buffer
      */
     private void createVB(final int n, final int m) {
-        vertices = new float[3 * m * n];
+        vertices = new float[4 * m * n];
 
         // Vertices <0;1>
         int index = 0;
@@ -36,6 +36,7 @@ public class Grid {
                 vertices[index++] = j / (float) (n - 1);
                 vertices[index++] = i / (float) (m - 1);
                 vertices[index++] = 0.f;
+                vertices[index++] = 1.f;
             }
         }
     }
