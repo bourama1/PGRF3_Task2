@@ -146,9 +146,9 @@ public class Renderer extends AbstractRenderer {
             glBindTexture(GL_TEXTURE_2D, textureIds[i]);
         }
 
-        glUniform1i(loc_uNormal,0);
-        glUniform1i(loc_uAlbedo,1);
-        glUniform1i(loc_uDepth,2);
+        glUniform1i(loc_uNormal,1);
+        glUniform1i(loc_uAlbedo,2);
+        glUniform1i(loc_uDepth,3);
 
         quadMesh.getBuffers().bind(lightShaderProgram);
         quadMesh.getBuffers().draw(GL_TRIANGLE_STRIP, lightShaderProgram);
