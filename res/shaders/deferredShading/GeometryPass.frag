@@ -23,6 +23,13 @@ void main()
         buffAlbedo = vec4(0.8f, 0.4f, 0.4f, 1.0f);
         // store specular per-fragment color
         buffSpecular = vec4(0.5f, 0.5f, 0.5f, 1.0f);
+    } else if (u_Obj == 2) {
+        // Texture readings with parallax offset and store in gbuffer
+        buffNormal = vec4(0.5f * (normalize(normal)) + 0.5f, 1.0f);
+        // and the diffuse per-fragment color
+        buffAlbedo = vec4(1.0f);
+        // store specular per-fragment color
+        buffSpecular = vec4(1.0f);
     } else {
         //Parallax mapping calculations
         float height = texture(textureDisplacement, texCoords).r;

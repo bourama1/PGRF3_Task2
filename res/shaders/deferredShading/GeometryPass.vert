@@ -12,6 +12,7 @@ uniform mat4 u_View;
 uniform mat4 u_Proj;
 uniform mat4 u_Model;
 uniform int u_Obj;
+uniform vec3 u_LightSource;
 
 const float delta = 0.001f;
 
@@ -20,6 +21,9 @@ const float delta = 0.001f;
 *   Returns the position of the object as vec3
 */
 vec3 posCalc(vec3 inPosition) {
+    switch(u_Obj) {
+            case 2: return vec3(u_LightSource.x + ((inPosition.x - 0.5f) / 4), u_LightSource.y + ((inPosition.y - 0.5f) / 4), u_LightSource.z);
+    }
     return inPosition;
 }
 

@@ -17,15 +17,16 @@ uniform sampler2D u_Albedo;
 uniform sampler2D u_Specular;
 uniform sampler2D u_Normal;
 uniform sampler2D u_Depth;
+uniform int u_Obj;
 
 vec4 calcLightColor(vec4 diffuse, vec4 specular, float reflectance, vec3 position, vec3 normal) {
     vec4 diffuseColor = vec4(0.f, 0.f, 0.f, 1.f);
     vec4 specColor = vec4(0.f, 0.f, 0.f, 1.f);
-    vec4 ambientColor = vec4(0.f, 0.f, 0.f, 1.f);
+    vec4 ambientColor = vec4(0.1f, 0.1f, 0.1f, 1.f);
 
     // Diffuse Light
     vec3 toLightDir = normalize(u_LightSource.xyz - position.xyz);
-    vec4 lightColor = vec4(0.5f, 0.5f, 0.5f, 1.0f);
+    vec4 lightColor = vec4(0.7f, 0.7f, 0.7f, 1.0f);
     float diffuseFactor = max(dot(normal, toLightDir), 0.0f);
     diffuseColor = diffuse * lightColor * diffuseFactor;
 
@@ -60,4 +61,8 @@ void main() {
     float reflectance = albedo.a;
     vec4 specular = texture(u_Specular, outTextCoord);
     fragColor = calcLightColor(diffuse, specular, reflectance, view_pos, normal);
+
+    // Light Object
+    if (u_Obj == 2)
+            fragColor = vec4(1.f);
 }

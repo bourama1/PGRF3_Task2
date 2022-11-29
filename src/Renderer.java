@@ -23,9 +23,12 @@ public class Renderer extends AbstractRenderer {
     private Mat4 projection;
     private Mat4 model = new Mat4Identity();
     private GBuffer gBuffer;
-    private Grid grid, quadMesh;
+    private Grid grid, lightGrid, quadMesh;
     private OGLTexture2D.Viewer viewer;
     private OGLModelOBJ objModel;
+    private final float lightSourceX = 0.5f;
+    private final float lightSourceY = 0.5f;
+    private final float lightSourceZ = 1.f;
 
     private OGLTexture2D textureDiffuse, textureNormal, textureSpecular, textureDisplacement;
 
@@ -46,6 +49,7 @@ public class Renderer extends AbstractRenderer {
 
         gBuffer = new GBuffer();
         grid = new Grid(10,10);
+        lightGrid = new Grid(10, 10);
         quadMesh = new Grid(100,100);
 
         //Shaders
@@ -83,6 +87,7 @@ public class Renderer extends AbstractRenderer {
 
         glUseProgram(geoShaderProgram);
 
+        // Uniforms
         // Proj
         int loc_uProj = glGetUniformLocation(geoShaderProgram, "u_Proj");
         glUniformMatrix4fv(loc_uProj, false, projection.floatArray());
@@ -94,6 +99,10 @@ public class Renderer extends AbstractRenderer {
         // Model
         int loc_uModel = glGetUniformLocation(geoShaderProgram, "u_Model");
 
+        // Light Source
+        int loc_uLightSource = glGetUniformLocation(geoShaderProgram, "u_LightSource");
+        glUniform3f(loc_uLightSource, lightSourceX, lightSourceY, lightSourceZ);
+
         // Obj
         int loc_uObj = glGetUniformLocation(geoShaderProgram, "u_Obj");
         glUniform1i(loc_uObj, 1);
@@ -103,6 +112,12 @@ public class Renderer extends AbstractRenderer {
         glUniformMatrix4fv(loc_uModel, false, model.floatArray());
 
         objModel.getBuffers().draw(GL_TRIANGLES, geoShaderProgram);
+
+        // Light
+        model = new Mat4Identity();
+        glUniform1i(loc_uObj, 2);
+        glUniformMatrix4fv(loc_uModel, false, model.floatArray());
+        lightGrid.getBuffers().draw(GL_TRIANGLE_STRIP, geoShaderProgram);
 
         // Wall
         model = new Mat4Identity();
@@ -149,9 +164,6 @@ public class Renderer extends AbstractRenderer {
 
         // Light Source
         int loc_uLightSource = glGetUniformLocation(lightShaderProgram, "u_LightSource");
-        float lightSourceX = 0.f;
-        float lightSourceY = 0.f;
-        float lightSourceZ = 1.f;
         glUniform3f(loc_uLightSource, lightSourceX, lightSourceY, lightSourceZ);
 
         // GBuffer
