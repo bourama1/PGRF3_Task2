@@ -1,10 +1,10 @@
 #version 330
 
-const float SPECULAR_POWER = 10;
+const float SPECULAR_POWER = 10.f;
 
-const float constantAttenuation = 1.0;
-const float linearAttenuation = 0.1;
-const float quadraticAttenuation = 0.01;
+const float constantAttenuation = 1.0f;
+const float linearAttenuation = 0.1f;
+const float quadraticAttenuation = 0.01f;
 
 out vec4 fragColor;
 
@@ -18,14 +18,14 @@ uniform sampler2D u_Specular;
 uniform sampler2D u_Normal;
 uniform sampler2D u_Depth;
 
-vec4 calcLightColor(vec4 diffuse, vec4 baseColor, vec4 specular, vec3 position, vec3 normal) {
+vec4 calcLightColor(vec4 diffuse, vec4 specular, float reflectance, vec3 position, vec3 normal) {
     vec4 diffuseColor = vec4(0.f, 0.f, 0.f, 1.f);
     vec4 specColor = vec4(0.f, 0.f, 0.f, 1.f);
-    vec4 ambientColor = vec4(0.1f, 0.1f, 0.1f, 1.f);
+    vec4 ambientColor = vec4(0.f, 0.f, 0.f, 1.f);
 
     // Diffuse Light
     vec3 toLightDir = normalize(u_LightSource.xyz - position.xyz);
-    vec4 lightColor = vec4(0.2f, 0.2f, 0.2f, 1.0f);
+    vec4 lightColor = vec4(0.5f, 0.5f, 0.5f, 1.0f);
     float diffuseFactor = max(dot(normal, toLightDir), 0.0f);
     diffuseColor = diffuse * lightColor * diffuseFactor;
 
@@ -35,18 +35,18 @@ vec4 calcLightColor(vec4 diffuse, vec4 baseColor, vec4 specular, vec3 position, 
     vec3 reflectedLight = normalize(reflect(fromLightDir, normal));
     float specularFactor = max(dot(cameraDir, reflectedLight), 0.0f);
     specularFactor = pow(specularFactor, SPECULAR_POWER);
-    specColor = specular * specularFactor * lightColor;
+    specColor = specular * specularFactor * reflectance * lightColor;
 
     // Attenuation
     float dis = length(toLightDir);
     float att = 1.0 / (constantAttenuation + linearAttenuation * dis + quadraticAttenuation * pow(dis, 2.0f));
 
-    return ambientColor * baseColor + att * (diffuseColor * baseColor + specColor);
+    return ambientColor + att * (diffuseColor + specColor);
 }
 
 void main() {
-    vec4 baseColor = texture(u_Albedo, outTextCoord);
-    vec3 normal  = normalize(2.0f * texture(u_Normal, outTextCoord).xyz - 1.0f);
+    vec4 albedo = texture(u_Albedo, outTextCoord);
+    vec3 normal  = normalize(texture(u_Normal, outTextCoord).xyz  * 2.0f - 1.0f);
     float depth = texture(u_Depth, outTextCoord).r * 2.0f - 1.0f;
 
     mat4 invView = inverse(u_View);
@@ -55,9 +55,9 @@ void main() {
     vec4 clip      = vec4(outTextCoord.x * 2.0 - 1.0, outTextCoord.y * 2.0 - 1.0, depth, 1.0);
     vec4 view_w    = invProj * clip;
     vec3 view_pos  = view_w.xyz / view_w.w;
-    vec4 world_pos = invView * vec4(view_pos, 1);
 
-    vec4 diffuse = vec4(baseColor.rgb, 1.0f);
+    vec4 diffuse = vec4(albedo.rgb, 1.0f);
+    float reflectance = albedo.a;
     vec4 specular = texture(u_Specular, outTextCoord);
-    fragColor = calcLightColor(diffuse, baseColor, specular, view_pos, normal);
+    fragColor = calcLightColor(diffuse, specular, reflectance, view_pos, normal);
 }
