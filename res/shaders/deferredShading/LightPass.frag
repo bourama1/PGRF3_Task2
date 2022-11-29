@@ -19,10 +19,12 @@ struct PointLight
     Attenuation att;
 };
 
-uniform sampler2D positionsText;
-uniform sampler2D colorText;
-uniform sampler2D normalsText;
-uniform sampler2D depthText;
+uniform mat4 u_InvView;
+uniform mat4 u_InvProj;
+uniform vec3 u_LightSource;
+uniform sampler2D u_Albedo;
+uniform sampler2D u_Normal;
+uniform sampler2D u_Depth;
 
 uniform vec2 screenSize;
 uniform float specularPower;
@@ -68,10 +70,9 @@ vec4 calcPointLight(vec4 baseColor, PointLight light, vec3 position, vec3 normal
 
 void main() {
     vec2 textCoord = getTextCoord();
-    float depth = texture(depthText, textCoord).r;
-    vec3 worldPos = texture(positionsText, textCoord).xyz;
-    vec4 baseColor = texture(colorText, textCoord);
-    vec3 normal  = texture(normalsText, textCoord).xyz;
+    float depth = texture(u_Depth, textCoord).r;
+    vec4 baseColor = texture(u_Albedo, textCoord);
+    vec3 normal  = texture(u_Normal, textCoord).xyz;
 
-    fragColor = calcPointLight(baseColor, pointLight, worldPos.xyz, normal.xyz);
+    //fragColor = calcPointLight(baseColor, pointLight, worldPos.xyz, normal.xyz);
 }

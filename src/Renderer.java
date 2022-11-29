@@ -1,3 +1,4 @@
+import lwjglutils.OGLTexture2D;
 import lwjglutils.ShaderUtils;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.glfw.GLFWCursorPosCallback;
@@ -5,6 +6,8 @@ import org.lwjgl.glfw.GLFWKeyCallback;
 import org.lwjgl.glfw.GLFWMouseButtonCallback;
 import org.lwjgl.glfw.GLFWScrollCallback;
 import transforms.*;
+
+import java.io.IOException;
 import java.nio.DoubleBuffer;
 
 import static utils.Const.*;
@@ -12,7 +15,7 @@ import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL33.*;
 
 public class Renderer extends AbstractRenderer {
-    private int geoShaderProgram;
+    private int geoShaderProgram, lightShaderProgram;
     private Camera camera;
     private boolean mouseButton1;
     private double ox, oy;
@@ -20,8 +23,11 @@ public class Renderer extends AbstractRenderer {
     private Mat4 model = new Mat4Identity();
     private GBuffer gBuffer;
     private Grid grid;
-    private int loc_uLightSource;
+    private QuadMesh quadMesh;
     private float lightSourceX = 0.f, lightSourceY = 0.f, lightSourceZ = 1.f;
+    private OGLTexture2D.Viewer viewer;
+    private OGLTexture2D textureDiffuse, textureNormal, textureSpecular, textureDisplacement;
+
 
     @Override
     public void init() {
@@ -39,16 +45,31 @@ public class Renderer extends AbstractRenderer {
 
         gBuffer = new GBuffer();
         grid = new Grid(10,10);
+        quadMesh = new QuadMesh();
 
         //Shaders
-        this.geoShaderProgram = ShaderUtils.loadProgram("/shaders/deferredShading/GeometryPass");
+        geoShaderProgram = ShaderUtils.loadProgram("/shaders/deferredShading/GeometryPass");
+        lightShaderProgram = ShaderUtils.loadProgram("/shaders/deferredShading/LightPass");
         glUseProgram(geoShaderProgram);
+
+        // Textures
+        try {
+            textureDiffuse = new OGLTexture2D("./textures/wallDIFFUSE.jpg");
+            textureSpecular = new OGLTexture2D("./textures/wallSPECULAR.jpg");
+            textureNormal = new OGLTexture2D("./textures/wallNORM.jpg");
+            textureDisplacement = new OGLTexture2D("./textures/wallDISP.jpg");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        viewer = new OGLTexture2D.Viewer();
     }
 
     @Override
     public void display() {
         renderGeometry();
         renderLighting();
+        renderTextureView();
     }
 
     private void renderGeometry() {
@@ -68,18 +89,26 @@ public class Renderer extends AbstractRenderer {
         int loc_uView = glGetUniformLocation(geoShaderProgram, "u_View");
         glUniformMatrix4fv(loc_uView, false, camera.getViewMatrix().floatArray());
 
-        // View
+        // Model
         int loc_uModel = glGetUniformLocation(geoShaderProgram, "u_Model");
         glUniformMatrix4fv(loc_uModel, false, model.floatArray());
 
-        // Light Source
-        loc_uLightSource = glGetUniformLocation(geoShaderProgram, "u_LightSource");
-        glUniform3f(loc_uLightSource, lightSourceX, lightSourceY, lightSourceZ);
-
+        textureDiffuse.bind(geoShaderProgram, "textureDiffuse", 0);
+        textureSpecular.bind(geoShaderProgram, "textureSpecular", 1);
+        textureNormal.bind(geoShaderProgram, "textureNormal",2);
+        textureDisplacement.bind(geoShaderProgram, "textureDisplacement", 3);
         grid.getBuffers().draw(GL_TRIANGLE_STRIP, geoShaderProgram);
 
         glBindVertexArray(0);
         glEnable(GL_BLEND);
+    }
+
+    private void renderTextureView() {
+        float pos = 1;
+        for (int i = 0; i < gBuffer.getTextureIds().length; i++) {
+            viewer.view(gBuffer.getTextureIds()[i], -1, pos, 0.5);
+            pos -= 0.5f;
+        }
     }
 
     private void renderLighting() {
@@ -92,8 +121,40 @@ public class Renderer extends AbstractRenderer {
         glBlendFunc(GL_ONE, GL_ONE);
 
         glBindFramebuffer(GL_READ_FRAMEBUFFER, gBuffer.getGBufferId());
+        glUseProgram(lightShaderProgram);
 
-        //TODO
+        // Uniforms
+        // Proj
+        int loc_uInvProj = glGetUniformLocation(lightShaderProgram, "u_InvProj");
+        glUniformMatrix4fv(loc_uInvProj, false, projection.floatArray());
+
+        // View
+        int loc_uInvView = glGetUniformLocation(lightShaderProgram, "u_InvView");
+        glUniformMatrix4fv(loc_uInvView, false, camera.getViewMatrix().floatArray());
+
+        // Light Source
+        int loc_uLightSource = glGetUniformLocation(lightShaderProgram, "u_LightSource");
+        glUniform3f(loc_uLightSource, lightSourceX, lightSourceY, lightSourceZ);
+
+        // GBuffer
+        int loc_uNormal = glGetUniformLocation(lightShaderProgram, "u_Normal");
+        int loc_uAlbedo = glGetUniformLocation(lightShaderProgram, "u_Albedo");
+        int loc_uDepth = glGetUniformLocation(lightShaderProgram, "u_Depth");
+
+        // Bind the G-Buffer textures
+        int[] textureIds = gBuffer.getTextureIds();
+        int numTextures = textureIds != null ? textureIds.length : 0;
+        for (int i = 0; i < numTextures; i++) {
+            glActiveTexture(GL_TEXTURE0 + i);
+            glBindTexture(GL_TEXTURE_2D, textureIds[i]);
+        }
+
+        glUniform1i(loc_uNormal,0);
+        glUniform1i(loc_uAlbedo,1);
+        glUniform1i(loc_uDepth,2);
+
+        glBindVertexArray(quadMesh.getVaoId());
+        glDrawElements(GL_TRIANGLES, quadMesh.getNumVertices(), GL_UNSIGNED_INT, 0);
 
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     }

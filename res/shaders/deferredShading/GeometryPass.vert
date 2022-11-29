@@ -4,7 +4,6 @@ in vec2 inPosition;
 
 out vec2 TexCoords;
 out vec4 FragPos;
-out vec3 Normal;
 out vec3 viewVec;
 out vec3 lightVec;
 
@@ -22,9 +21,7 @@ const float delta = 0.001f;
 *   Returns the position of the object as vec3
 */
 vec3 posCalc(vec2 inPosition) {
-    switch (u_Function) {
-        default: return vec3(inPosition, 0.f);
-    }
+    return vec3(inPosition, 0.f);
 }
 
 /**
@@ -34,12 +31,12 @@ vec3 posCalc(vec2 inPosition) {
 mat3 getTBN(vec2 inPos) {
     vec3 tx = (posCalc(inPos + vec2(delta, 0)) - posCalc(inPos - vec2(delta, 0))) / vec3(1.f, 1.f, 2 * delta);
     vec3 ty = (posCalc(inPos + vec2(0, delta)) - posCalc(inPos - vec2(0, delta))) / vec3(1.f, 1.f, 2 * delta);
-    Normal = cross(tx, ty);
-    Normal = normalize(inverse(transpose(mat3(u_View * u_Model))) * Normal);
+    vec3 normal = cross(tx, ty);
+    normal = normalize(inverse(transpose(mat3(u_View * u_Model))) * normal);
     vec3 vTan = normalize(tx);
-    vec3 vBi = cross(Normal, vTan);
-    vTan = cross(vBi, Normal);
-    return mat3(vTan, vBi, Normal);
+    vec3 vBi = cross(normal, vTan);
+    vTan = cross(vBi, normal);
+    return mat3(vTan, vBi, normal);
 }
 
 void main() {
