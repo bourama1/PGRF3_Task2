@@ -114,6 +114,10 @@ public class Renderer extends AbstractRenderer {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glViewport(0, 0, WIDTH, HEIGHT);
 
+        glEnable(GL_BLEND);
+        glBlendEquation(GL_FUNC_ADD);
+        glBlendFunc(GL_ONE, GL_ONE);
+
         glBindFramebuffer(GL_READ_FRAMEBUFFER, gBuffer.getGBufferId());
         glUseProgram(lightShaderProgram);
 
@@ -154,6 +158,8 @@ public class Renderer extends AbstractRenderer {
 
         quadMesh.getBuffers().bind(lightShaderProgram);
         quadMesh.getBuffers().draw(GL_TRIANGLE_STRIP, lightShaderProgram);
+
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     }
 
     /**

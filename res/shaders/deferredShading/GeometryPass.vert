@@ -2,17 +2,12 @@
 
 in vec2 inPosition;
 
-out vec2 TexCoords;
-out vec4 FragPos;
+out vec2 texCoords;
 out vec3 viewVec;
-out vec3 lightVec;
 
 uniform mat4 u_View;
 uniform mat4 u_Proj;
 uniform mat4 u_Model;
-
-uniform int u_Function;
-uniform vec3 u_LightSource;
 
 const float delta = 0.001f;
 
@@ -41,20 +36,16 @@ mat3 getTBN(vec2 inPos) {
 
 void main() {
     //Texture
-    TexCoords = inPosition.xy;
+    texCoords = inPosition.xy;
 
     //Object position
-    FragPos = u_View * u_Model * vec4(posCalc(inPosition), 1.f);
-
-    //Light
-    vec3 viewDirection = normalize(-FragPos.xyz);
-    vec4 lightPosition = u_View * u_Model * vec4(u_LightSource, 1.);
-    vec3 toLightVector = normalize(lightPosition.xyz - FragPos.xyz);
+    vec4 worldPos = u_Model * vec4(posCalc(inPosition), 1.f);
+    vec4 viewPos = u_View * worldPos;
+    vec3 viewDirection = normalize(-viewPos.xyz);
 
     //TBN
     mat3 tbn = getTBN(inPosition);
     viewVec = transpose(tbn) * viewDirection;
-    lightVec = transpose(tbn) * toLightVector;
 
-    gl_Position = u_Proj * FragPos;
+    gl_Position = u_Proj * viewPos;
 }
