@@ -22,9 +22,7 @@ public class Renderer extends AbstractRenderer {
     private Mat4 projection;
     private Mat4 model = new Mat4Identity();
     private GBuffer gBuffer;
-    private Grid grid;
-    private QuadMesh quadMesh;
-    private float lightSourceX = 0.f, lightSourceY = 0.f, lightSourceZ = 1.f;
+    private Grid grid, quadMesh;
     private OGLTexture2D.Viewer viewer;
     private OGLTexture2D textureDiffuse, textureNormal, textureSpecular, textureDisplacement;
 
@@ -45,7 +43,7 @@ public class Renderer extends AbstractRenderer {
 
         gBuffer = new GBuffer();
         grid = new Grid(10,10);
-        quadMesh = new QuadMesh();
+        quadMesh = new Grid(100,100);
 
         //Shaders
         geoShaderProgram = ShaderUtils.loadProgram("/shaders/deferredShading/GeometryPass");
@@ -116,24 +114,23 @@ public class Renderer extends AbstractRenderer {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glViewport(0, 0, WIDTH, HEIGHT);
 
-        glEnable(GL_BLEND);
-        glBlendEquation(GL_FUNC_ADD);
-        glBlendFunc(GL_ONE, GL_ONE);
-
         glBindFramebuffer(GL_READ_FRAMEBUFFER, gBuffer.getGBufferId());
         glUseProgram(lightShaderProgram);
 
         // Uniforms
         // Proj
-        int loc_uInvProj = glGetUniformLocation(lightShaderProgram, "u_InvProj");
-        glUniformMatrix4fv(loc_uInvProj, false, projection.floatArray());
+        int loc_uProj = glGetUniformLocation(lightShaderProgram, "u_Proj");
+        glUniformMatrix4fv(loc_uProj, false, projection.floatArray());
 
         // View
-        int loc_uInvView = glGetUniformLocation(lightShaderProgram, "u_InvView");
-        glUniformMatrix4fv(loc_uInvView, false, camera.getViewMatrix().floatArray());
+        int loc_uView = glGetUniformLocation(lightShaderProgram, "u_View");
+        glUniformMatrix4fv(loc_uView, false, camera.getViewMatrix().floatArray());
 
         // Light Source
         int loc_uLightSource = glGetUniformLocation(lightShaderProgram, "u_LightSource");
+        float lightSourceX = 0.f;
+        float lightSourceY = 0.f;
+        float lightSourceZ = 1.f;
         glUniform3f(loc_uLightSource, lightSourceX, lightSourceY, lightSourceZ);
 
         // GBuffer
@@ -153,10 +150,8 @@ public class Renderer extends AbstractRenderer {
         glUniform1i(loc_uAlbedo,1);
         glUniform1i(loc_uDepth,2);
 
-        glBindVertexArray(quadMesh.getVaoId());
-        glDrawElements(GL_TRIANGLES, quadMesh.getNumVertices(), GL_UNSIGNED_INT, 0);
-
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        quadMesh.getBuffers().bind(lightShaderProgram);
+        quadMesh.getBuffers().draw(GL_TRIANGLE_STRIP, lightShaderProgram);
     }
 
     /**
