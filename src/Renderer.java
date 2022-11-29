@@ -95,6 +95,8 @@ public class Renderer extends AbstractRenderer {
         int loc_uModel = glGetUniformLocation(geoShaderProgram, "u_Model");
 
         // Obj
+        int loc_uObj = glGetUniformLocation(geoShaderProgram, "u_Obj");
+        glUniform1i(loc_uObj, 1);
         model = model.mul(new Mat4Scale(0.01f));
         model = model.mul(new Mat4RotY(Math.PI));
         model = model.mul(new Mat4Transl(0.5f,0.5f,0.4f));
@@ -104,6 +106,7 @@ public class Renderer extends AbstractRenderer {
 
         // Wall
         model = new Mat4Identity();
+        glUniform1i(loc_uObj, 0);
         glUniformMatrix4fv(loc_uModel, false, model.floatArray());
         textureDiffuse.bind(geoShaderProgram, "textureDiffuse", 0);
         textureSpecular.bind(geoShaderProgram, "textureSpecular", 1);
