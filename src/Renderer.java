@@ -102,10 +102,10 @@ public class Renderer extends AbstractRenderer {
     }
 
     private void renderTextureView() {
-        float pos = 1;
+        double pos = 0.5;
         for (int i = 0; i < gBuffer.getTextureIds().length; i++) {
             viewer.view(gBuffer.getTextureIds()[i], -1, pos, 0.5);
-            pos -= 0.5f;
+            pos -= 0.5;
         }
     }
 
@@ -136,6 +136,7 @@ public class Renderer extends AbstractRenderer {
         // GBuffer
         int loc_uNormal = glGetUniformLocation(lightShaderProgram, "u_Normal");
         int loc_uAlbedo = glGetUniformLocation(lightShaderProgram, "u_Albedo");
+        int loc_uSpecular = glGetUniformLocation(lightShaderProgram, "u_Specular");
         int loc_uDepth = glGetUniformLocation(lightShaderProgram, "u_Depth");
 
         // Bind the G-Buffer textures
@@ -146,8 +147,9 @@ public class Renderer extends AbstractRenderer {
             glBindTexture(GL_TEXTURE_2D, textureIds[i]);
         }
 
+        glUniform1i(loc_uAlbedo,0);
         glUniform1i(loc_uNormal,1);
-        glUniform1i(loc_uAlbedo,2);
+        glUniform1i(loc_uSpecular,2);
         glUniform1i(loc_uDepth,3);
 
         quadMesh.getBuffers().bind(lightShaderProgram);

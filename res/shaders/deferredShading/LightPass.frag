@@ -14,12 +14,14 @@ uniform mat4 u_View;
 uniform mat4 u_Proj;
 uniform vec3 u_LightSource;
 uniform sampler2D u_Albedo;
+uniform sampler2D u_Specular;
 uniform sampler2D u_Normal;
 uniform sampler2D u_Depth;
 
 vec4 calcLightColor(vec4 diffuse, vec4 baseColor, vec4 specular, vec3 position, vec3 normal) {
-    vec4 diffuseColor = vec4(0, 0, 0, 1);
-    vec4 specColor = vec4(0, 0, 0, 1);
+    vec4 diffuseColor = vec4(0.f, 0.f, 0.f, 1.f);
+    vec4 specColor = vec4(0.f, 0.f, 0.f, 1.f);
+    vec4 ambientColor = vec4(0.1f, 0.1f, 0.1f, 1.f);
 
     // Diffuse Light
     vec3 toLightDir = normalize(u_LightSource.xyz - position.xyz);
@@ -38,7 +40,6 @@ vec4 calcLightColor(vec4 diffuse, vec4 baseColor, vec4 specular, vec3 position, 
     // Attenuation
     float dis = length(toLightDir);
     float att = 1.0 / (constantAttenuation + linearAttenuation * dis + quadraticAttenuation * pow(dis, 2.0f));
-    vec4 ambientColor = vec4(0.1f, 0.1f, 0.1f, 1.f);
 
     return ambientColor * baseColor + att * (diffuseColor * baseColor + specColor);
 }
@@ -57,6 +58,6 @@ void main() {
     vec4 world_pos = invView * vec4(view_pos, 1);
 
     vec4 diffuse = vec4(baseColor.rgb, 1.0f);
-    vec4 specular = vec4(baseColor.a, baseColor.a, baseColor.a, 1.0f);
+    vec4 specular = texture(u_Specular, outTextCoord);
     fragColor = calcLightColor(diffuse, baseColor, specular, view_pos, normal);
 }
