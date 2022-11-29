@@ -1,3 +1,4 @@
+import lwjglutils.OGLModelOBJ;
 import lwjglutils.OGLTexture2D;
 import lwjglutils.ShaderUtils;
 import org.lwjgl.BufferUtils;
@@ -24,6 +25,8 @@ public class Renderer extends AbstractRenderer {
     private GBuffer gBuffer;
     private Grid grid, quadMesh;
     private OGLTexture2D.Viewer viewer;
+    private OGLModelOBJ objModel;
+
     private OGLTexture2D textureDiffuse, textureNormal, textureSpecular, textureDisplacement;
 
 
@@ -52,6 +55,7 @@ public class Renderer extends AbstractRenderer {
 
         // Textures
         try {
+            objModel = new OGLModelOBJ("/obj/ElephantBody.obj");
             textureDiffuse = new OGLTexture2D("./textures/wallDIFFUSE.jpg");
             textureSpecular = new OGLTexture2D("./textures/wallSPECULAR.jpg");
             textureNormal = new OGLTexture2D("./textures/wallNORM.jpg");
@@ -89,8 +93,18 @@ public class Renderer extends AbstractRenderer {
 
         // Model
         int loc_uModel = glGetUniformLocation(geoShaderProgram, "u_Model");
+
+        // Obj
+        model = model.mul(new Mat4Scale(0.01f));
+        model = model.mul(new Mat4RotY(Math.PI));
+        model = model.mul(new Mat4Transl(0.5f,0.5f,0.4f));
         glUniformMatrix4fv(loc_uModel, false, model.floatArray());
 
+        objModel.getBuffers().draw(GL_TRIANGLES, geoShaderProgram);
+
+        // Wall
+        model = new Mat4Identity();
+        glUniformMatrix4fv(loc_uModel, false, model.floatArray());
         textureDiffuse.bind(geoShaderProgram, "textureDiffuse", 0);
         textureSpecular.bind(geoShaderProgram, "textureSpecular", 1);
         textureNormal.bind(geoShaderProgram, "textureNormal",2);

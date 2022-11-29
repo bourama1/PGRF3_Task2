@@ -1,6 +1,6 @@
 #version 330
 
-in vec2 inPosition;
+in vec3 inPosition;
 
 out vec2 texCoords;
 out vec3 viewVec;
@@ -8,6 +8,7 @@ out vec3 viewVec;
 uniform mat4 u_View;
 uniform mat4 u_Proj;
 uniform mat4 u_Model;
+uniform int u_Func;
 
 const float delta = 0.001f;
 
@@ -15,17 +16,17 @@ const float delta = 0.001f;
 *   @param inPosition vec2 vertex position in VB
 *   Returns the position of the object as vec3
 */
-vec3 posCalc(vec2 inPosition) {
-    return vec3(inPosition, 0.f);
+vec3 posCalc(vec3 inPosition) {
+    return inPosition;
 }
 
 /**
 *   @param inPosition vec2 vertex position in VB
 *   Returns the matrix (tangent, bitangent, normal)
 */
-mat3 getTBN(vec2 inPos) {
-    vec3 tx = (posCalc(inPos + vec2(delta, 0)) - posCalc(inPos - vec2(delta, 0))) / vec3(1.f, 1.f, 2 * delta);
-    vec3 ty = (posCalc(inPos + vec2(0, delta)) - posCalc(inPos - vec2(0, delta))) / vec3(1.f, 1.f, 2 * delta);
+mat3 getTBN(vec3 inPos) {
+    vec3 tx = (posCalc(inPos + vec3(delta, 0, 0)) - posCalc(inPos - vec3(delta, 0, 0))) / vec3(1.f, 1.f, 2 * delta);
+    vec3 ty = (posCalc(inPos + vec3(0, delta, 0)) - posCalc(inPos - vec3(0, delta, 0))) / vec3(1.f, 1.f, 2 * delta);
     vec3 normal = cross(tx, ty);
     normal = normalize(inverse(transpose(mat3(u_View * u_Model))) * normal);
     vec3 vTan = normalize(tx);
