@@ -60,10 +60,10 @@ public class Renderer extends AbstractRenderer {
         // Textures
         try {
             objModel = new OGLModelOBJ("/obj/ElephantBody.obj");
-            textureDiffuse = new OGLTexture2D("./textures/wallDIFFUSE.jpg");
-            textureSpecular = new OGLTexture2D("./textures/wallSPECULAR.jpg");
-            textureNormal = new OGLTexture2D("./textures/wallNORM.jpg");
-            textureDisplacement = new OGLTexture2D("./textures/wallDISP.jpg");
+            textureDiffuse = new OGLTexture2D("./textures/bricks.png");
+            textureSpecular = new OGLTexture2D("./textures/bricksSpec.png");
+            textureNormal = new OGLTexture2D("./textures/bricksNormal.png");
+            textureDisplacement = new OGLTexture2D("./textures/bricksHeight.png");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

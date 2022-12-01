@@ -22,7 +22,6 @@ uniform int u_Obj;
 vec4 calcLightColor(vec4 diffuse, vec4 specular, float reflectance, vec3 position, vec3 normal) {
     vec4 diffuseColor = vec4(0.f, 0.f, 0.f, 1.f);
     vec4 specColor = vec4(0.f, 0.f, 0.f, 1.f);
-    vec4 ambientColor = vec4(0.1f, 0.1f, 0.1f, 1.f);
 
     // Diffuse Light
     vec3 toLightDir = normalize(u_LightSource.xyz - position.xyz);
@@ -42,7 +41,7 @@ vec4 calcLightColor(vec4 diffuse, vec4 specular, float reflectance, vec3 positio
     float dis = length(toLightDir);
     float att = 1.0 / (constantAttenuation + linearAttenuation * dis + quadraticAttenuation * pow(dis, 2.0f));
 
-    return ambientColor + att * (diffuseColor + specColor);
+    return att * (diffuseColor + specColor);
 }
 
 void main() {
