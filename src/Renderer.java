@@ -82,6 +82,10 @@ public class Renderer extends AbstractRenderer {
         renderLighting();
         renderTextureView();
     }
+    @Override
+    public void cleanUp() {
+        gBuffer.cleanUp();
+    }
 
     private void renderGeometry() {
         // Render G-Buffer for writing

@@ -119,6 +119,7 @@ public class Main {
             // invoked during this call.
             glfwPollEvents();
         }
+        renderer.cleanUp();
     }
 
     public static void main(String[] args) {

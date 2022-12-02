@@ -33,7 +33,6 @@ public abstract class AbstractRenderer {
 	
 	public void display() {
 		glViewport(0, 0, width, height);
-		String text = this.getClass().getName() + ": look at console and try keys, mouse, wheel and window interaction ";
 		
 		pass++;
 		// Set the clear color
@@ -41,14 +40,7 @@ public abstract class AbstractRenderer {
 				(float)(Math.cos(pass/200.)/2+0.5),
 				(float)(Math.sin(pass/300.)/2+0.5), 0.0f);
 		// clear the framebuffer
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); 
-		
-		//create and draw text
-		textRenderer.clear();
-		textRenderer.addStr2D(3, 20, text);
-		textRenderer.addStr2D(3, 50, "pass " + pass);
-		textRenderer.addStr2D(width-90, height-3, " (c) PGRF UHK");
-		textRenderer.draw();
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	}
 
 	protected GLFWKeyCallback keyCallback = new GLFWKeyCallback() {
@@ -133,8 +125,6 @@ public abstract class AbstractRenderer {
 	public GLFWScrollCallback getScrollCallback() {
 		return scrollCallback;
 	}
-	
-	public void dispose(){
-		
-	}
+
+	public abstract void cleanUp();
 }
