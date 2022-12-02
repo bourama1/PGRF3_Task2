@@ -53,8 +53,8 @@ public class Renderer extends AbstractRenderer {
         quadMesh = new Grid(100,100);
 
         //Shaders
-        geoShaderProgram = ShaderUtils.loadProgram("/shaders/deferredShading/GeometryPass");
-        lightShaderProgram = ShaderUtils.loadProgram("/shaders/deferredShading/LightPass");
+        geoShaderProgram = ShaderUtils.loadProgram("/shaders/GeometryPass");
+        lightShaderProgram = ShaderUtils.loadProgram("/shaders/LightPass");
 
         // Light Source
         loc_uLightSource = glGetUniformLocation(lightShaderProgram, "u_LightSource");
