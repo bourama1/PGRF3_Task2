@@ -31,7 +31,7 @@ vec4 calcLightColor(vec4 baseColor, vec4 diffuse, vec4 specular, float reflectan
     //attenuation
     float dis = length(lightVec);
     float att = 1.0 / (constantAttenuation + linearAttenuation * dis + quadraticAttenuation * pow(dis, 2.0f));
-    vec4 ambientCol = vec4(0.0f, 0.0f, 0.0f, 1.0f);
+    vec4 ambientCol = vec4(0.1f, 0.1f, 0.1f, 1.0f);
     vec4 diffuseCol = NDotL * diffuse;
     vec4 specularCol = specular * pow(NdotHV, SPECULAR_POWER);
 
