@@ -26,10 +26,10 @@ public class Renderer extends AbstractRenderer {
     private Grid grid, lightGrid, quadMesh;
     private OGLTexture2D.Viewer viewer;
     private OGLModelOBJ objModel;
-    private final float lightSourceX = 0.5f;
-    private final float lightSourceY = 0.5f;
-    private final float lightSourceZ = 1.f;
-
+    private float lightSourceX = 0.5f;
+    private float lightSourceY = 0.5f;
+    private float lightSourceZ = 1.f;
+    private int loc_uLightSource, loc_uLightSourceGeometry;
     private OGLTexture2D textureDiffuse, textureNormal, textureSpecular, textureDisplacement;
 
 
@@ -55,6 +55,11 @@ public class Renderer extends AbstractRenderer {
         //Shaders
         geoShaderProgram = ShaderUtils.loadProgram("/shaders/deferredShading/GeometryPass");
         lightShaderProgram = ShaderUtils.loadProgram("/shaders/deferredShading/LightPass");
+
+        // Light Source
+        loc_uLightSource = glGetUniformLocation(lightShaderProgram, "u_LightSource");
+        loc_uLightSourceGeometry = glGetUniformLocation(geoShaderProgram, "u_LightSourceGeometry");
+
         glUseProgram(geoShaderProgram);
 
         // Textures
@@ -99,9 +104,7 @@ public class Renderer extends AbstractRenderer {
         // Model
         int loc_uModel = glGetUniformLocation(geoShaderProgram, "u_Model");
 
-        // Light Source
-        int loc_uLightSource = glGetUniformLocation(geoShaderProgram, "u_LightSource");
-        glUniform3f(loc_uLightSource, lightSourceX, lightSourceY, lightSourceZ);
+        glUniform3f(loc_uLightSourceGeometry, lightSourceX, lightSourceY, lightSourceZ);
 
         // Obj
         int loc_uObj = glGetUniformLocation(geoShaderProgram, "u_Obj");
@@ -162,8 +165,6 @@ public class Renderer extends AbstractRenderer {
         int loc_uView = glGetUniformLocation(lightShaderProgram, "u_View");
         glUniformMatrix4fv(loc_uView, false, camera.getViewMatrix().floatArray());
 
-        // Light Source
-        int loc_uLightSource = glGetUniformLocation(lightShaderProgram, "u_LightSource");
         glUniform3f(loc_uLightSource, lightSourceX, lightSourceY, lightSourceZ);
 
         // GBuffer
@@ -271,6 +272,16 @@ public class Renderer extends AbstractRenderer {
                 case GLFW_KEY_S -> camera = camera.backward(CAM_SPEED);
                 case GLFW_KEY_A -> camera = camera.left(CAM_SPEED);
                 case GLFW_KEY_D -> camera = camera.right(CAM_SPEED);
+                // Light move
+                case GLFW_KEY_X -> {
+                    glUniform3f(loc_uLightSource, lightSourceX += 0.1f, lightSourceY, lightSourceZ);
+                    glUniform3f(loc_uLightSourceGeometry, lightSourceX += 0.1f, lightSourceY, lightSourceZ);
+                }
+                case GLFW_KEY_C -> glUniform3f(loc_uLightSource, lightSourceX -= 0.1f, lightSourceY, lightSourceZ);
+                case GLFW_KEY_Y -> glUniform3f(loc_uLightSource, lightSourceX, lightSourceY += 0.1f, lightSourceZ);
+                case GLFW_KEY_U -> glUniform3f(loc_uLightSource, lightSourceX, lightSourceY -= 0.1f, lightSourceZ);
+                case GLFW_KEY_Z -> glUniform3f(loc_uLightSource, lightSourceX, lightSourceY, lightSourceZ += 0.1f);
+                case GLFW_KEY_LEFT_SHIFT -> glUniform3f(loc_uLightSource, lightSourceX, lightSourceY, lightSourceZ -= 0.1f);
             }
         }
     };

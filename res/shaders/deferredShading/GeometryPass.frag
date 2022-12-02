@@ -18,14 +18,14 @@ void main()
 {
     if (u_Obj == 1) {
         // Texture readings with parallax offset and store in gbuffer
-        buffNormal = vec4(0.5f * (normalize(normal)) + 0.5f, 1.0f);
+        buffNormal = vec4(normal, 1.0f) * 0.5f + 0.5f;
         // and the diffuse per-fragment color
-        buffAlbedo = vec4(0.8f, 0.4f, 0.4f, 1.0f);
+        buffAlbedo = vec4(1.0f, 0.f, 0.f, 1.0f);
         // store specular per-fragment color
-        buffSpecular = vec4(0.5f, 0.5f, 0.5f, 1.0f);
+        buffSpecular = vec4(0.7f, 0.7f, 0.7f, 1.0f);
     } else if (u_Obj == 2) {
         // Texture readings with parallax offset and store in gbuffer
-        buffNormal = vec4(0.5f * (normalize(normal)) + 0.5f, 1.0f);
+        buffNormal = vec4(normal, 1.0f) * 0.5f + 0.5f;
         // and the diffuse per-fragment color
         buffAlbedo = vec4(1.0f);
         // store specular per-fragment color
@@ -40,7 +40,7 @@ void main()
         vec2 offset = eye.xy * v;
 
         // Texture readings with parallax offset and store in gbuffer
-        buffNormal = vec4(0.5f * (normalize(texture(textureNormal, texCoords + offset)).xyz) + 0.5f, 1.0f);
+        buffNormal = texture(textureNormal, texCoords + offset) * 0.5f + 0.5f;
         // and the diffuse per-fragment color
         buffAlbedo = texture(textureDiffuse, texCoords);
         // store specular per-fragment color

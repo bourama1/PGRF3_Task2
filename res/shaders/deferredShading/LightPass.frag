@@ -19,29 +19,23 @@ uniform sampler2D u_Normal;
 uniform sampler2D u_Depth;
 uniform int u_Obj;
 
-vec4 calcLightColor(vec4 diffuse, vec4 specular, float reflectance, vec3 position, vec3 normal) {
-    vec4 diffuseColor = vec4(0.f, 0.f, 0.f, 1.f);
-    vec4 specColor = vec4(0.f, 0.f, 0.f, 1.f);
+vec4 calcLightColor(vec4 baseColor, vec4 diffuse, vec4 specular, float reflectance, vec3 position, vec3 normal) {
+    //Ligth calculations
+    vec3 viewVec = normalize(-position);
+    vec3 lightVec = u_LightSource.xyz - position.xyz;
+    vec3 ld = normalize(lightVec);
+    vec3 nd = normal;
+    float NDotL = max(dot(nd, ld), 0.f);
+    float NdotHV = max(0.f, dot(nd, normalize(ld + viewVec)));
 
-    // Diffuse Light
-    vec3 toLightDir = normalize(u_LightSource.xyz - position.xyz);
-    vec4 lightColor = vec4(0.7f, 0.7f, 0.7f, 1.0f);
-    float diffuseFactor = max(dot(normal, toLightDir), 0.0f);
-    diffuseColor = diffuse * lightColor * diffuseFactor;
-
-    // Specular Light
-    vec3 cameraDir = normalize(-position);
-    vec3 fromLightDir = -toLightDir;
-    vec3 reflectedLight = normalize(reflect(fromLightDir, normal));
-    float specularFactor = max(dot(cameraDir, reflectedLight), 0.0f);
-    specularFactor = pow(specularFactor, SPECULAR_POWER);
-    specColor = specular * specularFactor * reflectance * lightColor;
-
-    // Attenuation
-    float dis = length(toLightDir);
+    //attenuation
+    float dis = length(lightVec);
     float att = 1.0 / (constantAttenuation + linearAttenuation * dis + quadraticAttenuation * pow(dis, 2.0f));
+    vec4 ambientCol = vec4(0.0f, 0.0f, 0.0f, 1.0f);
+    vec4 diffuseCol = NDotL * diffuse;
+    vec4 specularCol = specular * pow(NdotHV, SPECULAR_POWER);
 
-    return att * (diffuseColor + specColor);
+    return ambientCol * baseColor + att * (diffuseCol * baseColor + specularCol);
 }
 
 void main() {
@@ -59,7 +53,7 @@ void main() {
     vec4 diffuse = vec4(albedo.rgb, 1.0f);
     float reflectance = albedo.a;
     vec4 specular = texture(u_Specular, outTextCoord);
-    fragColor = calcLightColor(diffuse, specular, reflectance, view_pos, normal);
+    fragColor = calcLightColor(albedo, diffuse, specular, reflectance, view_pos, normal);
 
     // Light Object
     if (u_Obj == 2)

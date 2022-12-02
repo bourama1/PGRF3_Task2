@@ -12,7 +12,7 @@ uniform mat4 u_View;
 uniform mat4 u_Proj;
 uniform mat4 u_Model;
 uniform int u_Obj;
-uniform vec3 u_LightSource;
+uniform vec3 u_LightSourceGeometry;
 
 const float delta = 0.001f;
 
@@ -22,7 +22,7 @@ const float delta = 0.001f;
 */
 vec3 posCalc(vec3 inPosition) {
     switch(u_Obj) {
-        case 2: return vec3(u_LightSource.x + ((inPosition.x - 0.5f) / 4), u_LightSource.y + ((inPosition.y - 0.5f) / 4), u_LightSource.z);
+        case 2: return vec3(u_LightSourceGeometry.x + ((inPosition.x - 0.5f) / 4), u_LightSourceGeometry.y + ((inPosition.y - 0.5f) / 4), u_LightSourceGeometry.z);
     }
     return inPosition;
 }
