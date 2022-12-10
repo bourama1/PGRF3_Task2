@@ -18,21 +18,22 @@ uniform int u_Obj;
 void main()
 {
     if (u_Obj == 0) {
-        // Texture readings with parallax offset and store in gbuffer
+        // Texture readings and store in gbuffer
         buffNormal = vec4(normal, 1.0f) * 0.5f + 0.5f;
         // and the diffuse per-fragment color
         buffAlbedo = vec4(lightCol, 1.0f);
         // store specular per-fragment color
         buffSpecular = vec4(1.0f);
     } else if (u_Obj == 1) {
-        // Texture readings with parallax offset and store in gbuffer
+        // Texture readings and store in gbuffer
         buffNormal = vec4(normal, 1.0f) * 0.5f + 0.5f;
         // and the diffuse per-fragment color
-        buffAlbedo = vec4(1.0f, 0.f, 0.f, 1.0f);
+        buffAlbedo = vec4(0.5f, 0.1f, 0.1f, 1.0f);
         // store specular per-fragment color
         buffSpecular = vec4(0.7f, 0.7f, 0.7f, 1.0f);
     } else if (u_Obj == 2) {
-        //Parallax mapping calculations
+        // Calculations for wall with textures
+        // Parallax mapping calculations
         float height = texture(textureHeight, texCoords).r;
         float scaleL = 0.04f;
         float scaleK = -0.02f;

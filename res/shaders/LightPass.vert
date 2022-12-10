@@ -6,6 +6,7 @@ out vec2 outTextCoord;
 
 void main()
 {
+    // set grid as windows for rendering into
     outTextCoord = inPosition;
     vec2 inPos = inPosition * 2.0f - 1.0f;
     inPos.x = inPos.x + .5f;

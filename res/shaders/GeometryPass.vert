@@ -34,10 +34,12 @@ mat3 getTBN(vec3 inPos) {
 
 void main() {
     if(u_Obj == 0) {
+        // Lights are only rendered as points for info
         lightCol = color;
         normal = vec3(1.f);
         gl_Position = u_Proj * u_View * inPosition;
     } else if(u_Obj == 1) {
+        // OBJ settings
         //Texture
         texCoords = inTexCoord;
 
@@ -48,6 +50,7 @@ void main() {
         normal = normalize(inNormal);
         gl_Position = u_Proj * viewPos;
     } else if(u_Obj == 2) {
+        // wall with textures settings
         //Texture
         texCoords = inPosition.xy;
 
