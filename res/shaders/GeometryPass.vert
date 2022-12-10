@@ -33,12 +33,12 @@ mat3 getTBN(vec3 inPos) {
 }
 
 void main() {
-    if(u_Obj == 0) {
+    if (u_Obj == 0) {
         // Lights are only rendered as points for info
         lightCol = color;
         normal = vec3(1.f);
         gl_Position = u_Proj * u_View * inPosition;
-    } else if(u_Obj == 1) {
+    } else if (u_Obj == 1) {
         // OBJ settings
         //Texture
         texCoords = inTexCoord;
@@ -49,7 +49,7 @@ void main() {
 
         normal = normalize(inNormal);
         gl_Position = u_Proj * viewPos;
-    } else if(u_Obj == 2) {
+    } else if (u_Obj == 2) {
         // wall with textures settings
         //Texture
         texCoords = inPosition.xy;
@@ -57,7 +57,7 @@ void main() {
         //Object position
         vec4 worldPos = u_Model * vec4(inPosition.xyz, 1.f);
         vec4 viewPos = u_View * worldPos;
-        vec3 viewDirection = normalize(-viewPos.xyz);
+        vec3 viewDirection = normalize(- viewPos.xyz);
 
         //TBN
         mat3 tbn = getTBN(inPosition.xyz);

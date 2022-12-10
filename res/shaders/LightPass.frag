@@ -65,7 +65,7 @@ vec4 calcLightColor(vec4 diffuse, vec4 specular, float reflectance, vec3 lightCo
 */
 vec4 calcPointLight(vec4 diffuse, vec4 specular, float reflectance, vec3 lightCol, vec4 lightPos, float intensity, vec3 position, vec3 normal) {
     vec3 lightVec = lightPos.xyz - position;
-    vec3 toLightDir  = normalize(lightVec);
+    vec3 toLightDir = normalize(lightVec);
     vec4 light_color = calcLightColor(diffuse, specular, reflectance, lightCol, position, intensity, toLightDir, normal);
 
     //attenuation
@@ -80,20 +80,20 @@ void main() {
     float reflectance = albedo.a;
     vec4 specular = texture(u_Specular, outTextCoord);
 
-    vec3 normal  = normalize(texture(u_Normal, outTextCoord).xyz  * 2.0f - 1.0f);
+    vec3 normal = normalize(texture(u_Normal, outTextCoord).xyz * 2.0f - 1.0f);
     float depth = texture(u_Depth, outTextCoord).x * 2.0f - 1.0f;
 
     mat4 invProj = inverse(u_Proj);
 
-    vec4 clip      = vec4(outTextCoord.x * 2.0 - 1.0, outTextCoord.y * 2.0 - 1.0, depth, 1.0);
-    vec4 view_w    = invProj * clip;
-    vec3 view_pos  = view_w.xyz / view_w.w;
+    vec4 clip = vec4(outTextCoord.x * 2.0 - 1.0, outTextCoord.y * 2.0 - 1.0, depth, 1.0);
+    vec4 view_w = invProj * clip;
+    vec3 view_pos = view_w.xyz / view_w.w;
 
     // combine all point lights together
     vec4 diffuseSpecularComp = vec4(0.0f);
     for (int i = 0; i < MAX_POINT_LIGHTS; i++) {
         if (u_PointLightsIntensity[i] > 0.0f)
-                diffuseSpecularComp += calcPointLight(diffuse, specular, reflectance, u_PointLightsCol[i],
+            diffuseSpecularComp += calcPointLight(diffuse, specular, reflectance, u_PointLightsCol[i],
                                                 u_PointLightsPos[i], u_PointLightsIntensity[i], view_pos, normal);
     }
 

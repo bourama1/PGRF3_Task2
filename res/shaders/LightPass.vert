@@ -1,6 +1,6 @@
 #version 330
 
-layout (location=0) in vec2 inPosition;
+layout (location = 0) in vec2 inPosition;
 
 out vec2 outTextCoord;
 
