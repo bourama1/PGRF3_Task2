@@ -26,7 +26,7 @@ public class Renderer extends AbstractRenderer {
     private Mat4 projection;
     private Mat4 model = new Mat4Identity();
     private GBuffer gBuffer;
-    private Grid grid, lightGrid, quadMesh;
+    private Grid grid, quadMesh;
     private OGLTexture2D.Viewer viewer;
     private OGLModelOBJ objModel;
     private SceneLights sceneLights;
@@ -66,7 +66,6 @@ public class Renderer extends AbstractRenderer {
 
         gBuffer = new GBuffer();
         grid = new Grid(10,10);
-        lightGrid = new Grid(10, 10);
         quadMesh = new Grid(100,100);
 
         glUseProgram(geoShaderProgram);
@@ -127,15 +126,14 @@ public class Renderer extends AbstractRenderer {
 
         objModel.getBuffers().draw(GL_TRIANGLES, geoShaderProgram);
 
-        /* Light
-        model = new Mat4Identity();
-        glUniform1i(loc_uObj, 2);
-        glUniformMatrix4fv(loc_uModel, false, model.floatArray());
-        lightGrid.getBuffers().draw(GL_TRIANGLE_STRIP, geoShaderProgram);*/
+        glUniform1i(loc_uObj, 0);
+        for (PointLight light : sceneLights.getPointLights()){
+            light.getBuffers().draw(GL_POINTS, geoShaderProgram);
+        }
 
         // Wall
+        glUniform1i(loc_uObj, 2);
         model = new Mat4Identity();
-        glUniform1i(loc_uObj, 0);
         glUniformMatrix4fv(loc_uModel, false, model.floatArray());
         textureDiffuse.bind(geoShaderProgram, "textureDiffuse", 0);
         textureSpecular.bind(geoShaderProgram, "textureSpecular", 1);

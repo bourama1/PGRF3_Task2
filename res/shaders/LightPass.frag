@@ -83,8 +83,4 @@ void main() {
 
     vec4 ambient = calcAmbient(u_AmbientLightCol, u_AmbientLightIntensity, diffuse);
     fragColor = ambient + diffuseSpecularComp;
-
-    // Light Object
-    if (u_Obj == 2)
-            fragColor = vec4(1.f);
 }

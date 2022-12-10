@@ -7,6 +7,7 @@ layout (location = 2) out vec4 buffSpecular;
 in vec2 texCoords;
 in vec3 viewVec;
 in vec3 normal;
+in vec3 lightCol;
 
 uniform sampler2D textureDiffuse;
 uniform sampler2D textureSpecular;
@@ -16,7 +17,14 @@ uniform int u_Obj;
 
 void main()
 {
-    if (u_Obj == 1) {
+    if (u_Obj == 0) {
+        // Texture readings with parallax offset and store in gbuffer
+        buffNormal = vec4(normal, 1.0f) * 0.5f + 0.5f;
+        // and the diffuse per-fragment color
+        buffAlbedo = vec4(lightCol, 1.0f);
+        // store specular per-fragment color
+        buffSpecular = vec4(1.0f);
+    } else if (u_Obj == 1) {
         // Texture readings with parallax offset and store in gbuffer
         buffNormal = vec4(normal, 1.0f) * 0.5f + 0.5f;
         // and the diffuse per-fragment color
@@ -24,13 +32,6 @@ void main()
         // store specular per-fragment color
         buffSpecular = vec4(0.7f, 0.7f, 0.7f, 1.0f);
     } else if (u_Obj == 2) {
-        // Texture readings with parallax offset and store in gbuffer
-        buffNormal = vec4(normal, 1.0f) * 0.5f + 0.5f;
-        // and the diffuse per-fragment color
-        buffAlbedo = vec4(1.0f);
-        // store specular per-fragment color
-        buffSpecular = vec4(1.0f);
-    } else {
         //Parallax mapping calculations
         float height = texture(textureHeight, texCoords).r;
         float scaleL = 0.04f;
