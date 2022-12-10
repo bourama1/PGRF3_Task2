@@ -1,3 +1,5 @@
+import lights.PointLight;
+import lights.SceneLights;
 import lwjglutils.OGLModelOBJ;
 import lwjglutils.OGLTexture2D;
 import lwjglutils.ShaderUtils;
@@ -10,6 +12,7 @@ import transforms.*;
 
 import java.io.IOException;
 import java.nio.DoubleBuffer;
+import java.nio.FloatBuffer;
 
 import static utils.Const.*;
 import static org.lwjgl.glfw.GLFW.*;
@@ -26,11 +29,10 @@ public class Renderer extends AbstractRenderer {
     private Grid grid, lightGrid, quadMesh;
     private OGLTexture2D.Viewer viewer;
     private OGLModelOBJ objModel;
-    private float lightSourceX = 0.5f;
-    private float lightSourceY = 0.5f;
-    private float lightSourceZ = 1.f;
-    private int loc_uLightSource, loc_uLightSourceGeometry;
-    private OGLTexture2D textureDiffuse, textureNormal, textureSpecular, textureDisplacement;
+    private SceneLights sceneLights;
+    private int loc_uAmbientLight, loc_uAmbientLightIntensity;
+    private int loc_uPointLightCol, loc_uPointLightIntensity, loc_uPointLightPos;
+    private OGLTexture2D textureDiffuse, textureNormal, textureSpecular, textureHeight;
 
 
     @Override
@@ -38,6 +40,21 @@ public class Renderer extends AbstractRenderer {
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         glEnable(GL_DEPTH_TEST);
         glPointSize(10.f);
+
+        //Shaders
+        geoShaderProgram = ShaderUtils.loadProgram("/shaders/GeometryPass");
+        lightShaderProgram = ShaderUtils.loadProgram("/shaders/LightPass");
+
+        // Lights
+        sceneLights = new SceneLights();
+        for (int i = 0; i < POINT_LIGHTS; i++){
+            sceneLights.getPointLights().add(new PointLight());
+        }
+        loc_uPointLightCol = glGetUniformLocation(lightShaderProgram, "u_PointLightsCol");
+        loc_uPointLightPos = glGetUniformLocation(lightShaderProgram, "u_PointLightsPos");
+        loc_uPointLightIntensity = glGetUniformLocation(lightShaderProgram, "u_PointLightsIntensity");
+        loc_uAmbientLight = glGetUniformLocation(lightShaderProgram, "u_AmbientLightCol");
+        loc_uAmbientLightIntensity = glGetUniformLocation(lightShaderProgram, "u_AmbientLightIntensity");
 
         camera = new Camera()
                 .withPosition(new Vec3D(0.f, 0f, 0f))
@@ -52,14 +69,6 @@ public class Renderer extends AbstractRenderer {
         lightGrid = new Grid(10, 10);
         quadMesh = new Grid(100,100);
 
-        //Shaders
-        geoShaderProgram = ShaderUtils.loadProgram("/shaders/GeometryPass");
-        lightShaderProgram = ShaderUtils.loadProgram("/shaders/LightPass");
-
-        // Light Source
-        loc_uLightSource = glGetUniformLocation(lightShaderProgram, "u_LightSource");
-        loc_uLightSourceGeometry = glGetUniformLocation(geoShaderProgram, "u_LightSourceGeometry");
-
         glUseProgram(geoShaderProgram);
 
         // Textures
@@ -68,7 +77,7 @@ public class Renderer extends AbstractRenderer {
             textureDiffuse = new OGLTexture2D("./textures/bricks.png");
             textureSpecular = new OGLTexture2D("./textures/bricksSpec.png");
             textureNormal = new OGLTexture2D("./textures/bricksNormal.png");
-            textureDisplacement = new OGLTexture2D("./textures/bricksHeight.png");
+            textureHeight = new OGLTexture2D("./textures/bricksHeight.png");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -108,8 +117,6 @@ public class Renderer extends AbstractRenderer {
         // Model
         int loc_uModel = glGetUniformLocation(geoShaderProgram, "u_Model");
 
-        glUniform3f(loc_uLightSourceGeometry, lightSourceX, lightSourceY, lightSourceZ);
-
         // Obj
         int loc_uObj = glGetUniformLocation(geoShaderProgram, "u_Obj");
         glUniform1i(loc_uObj, 1);
@@ -120,11 +127,11 @@ public class Renderer extends AbstractRenderer {
 
         objModel.getBuffers().draw(GL_TRIANGLES, geoShaderProgram);
 
-        // Light
+        /* Light
         model = new Mat4Identity();
         glUniform1i(loc_uObj, 2);
         glUniformMatrix4fv(loc_uModel, false, model.floatArray());
-        lightGrid.getBuffers().draw(GL_TRIANGLE_STRIP, geoShaderProgram);
+        lightGrid.getBuffers().draw(GL_TRIANGLE_STRIP, geoShaderProgram);*/
 
         // Wall
         model = new Mat4Identity();
@@ -133,7 +140,7 @@ public class Renderer extends AbstractRenderer {
         textureDiffuse.bind(geoShaderProgram, "textureDiffuse", 0);
         textureSpecular.bind(geoShaderProgram, "textureSpecular", 1);
         textureNormal.bind(geoShaderProgram, "textureNormal",2);
-        textureDisplacement.bind(geoShaderProgram, "textureDisplacement", 3);
+        textureHeight.bind(geoShaderProgram, "textureHeight", 3);
         grid.getBuffers().draw(GL_TRIANGLE_STRIP, geoShaderProgram);
 
         glBindVertexArray(0);
@@ -159,6 +166,8 @@ public class Renderer extends AbstractRenderer {
 
         glBindFramebuffer(GL_READ_FRAMEBUFFER, gBuffer.getGBufferId());
         glUseProgram(lightShaderProgram);
+        
+        updateLights();
 
         // Uniforms
         // Proj
@@ -168,8 +177,6 @@ public class Renderer extends AbstractRenderer {
         // View
         int loc_uView = glGetUniformLocation(lightShaderProgram, "u_View");
         glUniformMatrix4fv(loc_uView, false, camera.getViewMatrix().floatArray());
-
-        glUniform3f(loc_uLightSource, lightSourceX, lightSourceY, lightSourceZ);
 
         // GBuffer
         int loc_uNormal = glGetUniformLocation(lightShaderProgram, "u_Normal");
@@ -194,6 +201,31 @@ public class Renderer extends AbstractRenderer {
         quadMesh.getBuffers().draw(GL_TRIANGLE_STRIP, lightShaderProgram);
 
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    }
+
+    private void updateLights() {
+        glUseProgram(lightShaderProgram);
+        float[] ambientLight = sceneLights.getAmbientLight().getColor();
+        glUniform3fv(loc_uAmbientLight, ambientLight);
+        float ambientLightIntensity = sceneLights.getAmbientLight().getIntensity();
+        glUniform1f(loc_uAmbientLightIntensity, ambientLightIntensity);
+
+        FloatBuffer pointLightColors = BufferUtils.createFloatBuffer(3 * POINT_LIGHTS);
+        FloatBuffer pointLightPositions = BufferUtils.createFloatBuffer(4 * POINT_LIGHTS);
+        FloatBuffer pointLightIntensity = BufferUtils.createFloatBuffer(POINT_LIGHTS);
+        for (int i = 0; i < POINT_LIGHTS; i++) {
+            float[] pointLightCol = sceneLights.getPointLights().get(i).getColor();
+            float[] pointLightPos = sceneLights.getPointLights().get(i).getPosition();
+            pointLightColors.put(pointLightCol);
+            pointLightPositions.put(pointLightPos);
+            pointLightIntensity.put(sceneLights.getPointLights().get(i).getIntensity());
+        }
+        pointLightColors.flip();
+        pointLightPositions.flip();
+        pointLightIntensity.flip();
+        glUniform3fv(loc_uPointLightCol, pointLightColors);
+        glUniform4fv(loc_uPointLightPos, pointLightPositions);
+        glUniform1fv(loc_uPointLightIntensity, pointLightIntensity);
     }
 
     /**
@@ -276,16 +308,6 @@ public class Renderer extends AbstractRenderer {
                 case GLFW_KEY_S -> camera = camera.backward(CAM_SPEED);
                 case GLFW_KEY_A -> camera = camera.left(CAM_SPEED);
                 case GLFW_KEY_D -> camera = camera.right(CAM_SPEED);
-                // Light move
-                case GLFW_KEY_X -> {
-                    glUniform3f(loc_uLightSource, lightSourceX += 0.1f, lightSourceY, lightSourceZ);
-                    glUniform3f(loc_uLightSourceGeometry, lightSourceX += 0.1f, lightSourceY, lightSourceZ);
-                }
-                case GLFW_KEY_C -> glUniform3f(loc_uLightSource, lightSourceX -= 0.1f, lightSourceY, lightSourceZ);
-                case GLFW_KEY_Y -> glUniform3f(loc_uLightSource, lightSourceX, lightSourceY += 0.1f, lightSourceZ);
-                case GLFW_KEY_U -> glUniform3f(loc_uLightSource, lightSourceX, lightSourceY -= 0.1f, lightSourceZ);
-                case GLFW_KEY_Z -> glUniform3f(loc_uLightSource, lightSourceX, lightSourceY, lightSourceZ += 0.1f);
-                case GLFW_KEY_LEFT_SHIFT -> glUniform3f(loc_uLightSource, lightSourceX, lightSourceY, lightSourceZ -= 0.1f);
             }
         }
     };

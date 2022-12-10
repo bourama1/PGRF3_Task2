@@ -11,7 +11,7 @@ in vec3 normal;
 uniform sampler2D textureDiffuse;
 uniform sampler2D textureSpecular;
 uniform sampler2D textureNormal;
-uniform sampler2D textureDisplacement;
+uniform sampler2D textureHeight;
 uniform int u_Obj;
 
 void main()
@@ -32,7 +32,7 @@ void main()
         buffSpecular = vec4(1.0f);
     } else {
         //Parallax mapping calculations
-        float height = texture(textureDisplacement, texCoords).r;
+        float height = texture(textureHeight, texCoords).r;
         float scaleL = 0.04f;
         float scaleK = -0.02f;
         float v = height * scaleL + scaleK;
