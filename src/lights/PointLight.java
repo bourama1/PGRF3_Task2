@@ -13,7 +13,7 @@ public class PointLight {
                 (float) Math.random(), (float) Math.random(), (float) Math.random()
         };
         position = new float[]{
-                (float) Math.random(), (float) Math.random(), (float) Math.random()*(1.f - 0.5f) + 0.5f, 1.0f
+                (float) Math.random(), (float) Math.random(), (float) Math.random() * (1.f - 0.5f) + 0.5f, 1.0f
         };
         intensity = (float) Math.random() * 0.5f;
 
@@ -41,6 +41,7 @@ public class PointLight {
     public float getIntensity() {
         return intensity;
     }
+
     public OGLBuffers getBuffers() {
         return buffers;
     }

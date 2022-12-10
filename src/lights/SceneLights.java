@@ -1,6 +1,7 @@
 package lights;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class SceneLights {
     private final AmbientLight ambientLight;

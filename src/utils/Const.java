@@ -5,6 +5,7 @@ public final class Const {
     public static final int WIDTH = 800;
     public static final int HEIGHT = 600;
     public static final int POINT_LIGHTS = 10;
+
     private Const() {
     }
 }
