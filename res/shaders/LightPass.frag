@@ -29,20 +29,19 @@ vec4 calcAmbient(vec3 ambientLight, float intensity, vec4 diffuse) {
 }
 
 vec4 calcLightColor(vec4 diffuse, vec4 specular, float reflectance, vec3 lightCol, vec3 position, float intensity, vec3 toLightDir, vec3 normal) {
-    vec4 diffuseColor = vec4(0, 0, 0, 1);
-    vec4 specColor = vec4(0, 0, 0, 1);
-
     // Diffuse Light
-    float diffuseFactor = max(dot(normal, toLightDir), 0.0);
-    diffuseColor = diffuse * vec4(lightCol, 1.0) * intensity * diffuseFactor;
+    vec3 nd = normalize(normal);
+    vec3 ld = normalize(toLightDir);
+    float NDotL = max(dot(nd, ld), 0.f);
+    vec4 diffuseColor = diffuse * vec4(lightCol, 1.0) * intensity * NDotL;
 
     // Specular Light
-    vec3 camera_direction = normalize(-position);
-    vec3 from_light_dir = -toLightDir;
-    vec3 reflected_light = normalize(reflect(from_light_dir, normal));
-    float specularFactor = max(dot(camera_direction, reflected_light), 0.0);
+    vec3 viewVec = normalize(-position);
+    vec3 fromLightDir = -toLightDir;
+    vec3 reflected_light = normalize(reflect(fromLightDir, normal));
+    float specularFactor = max(dot(viewVec, reflected_light), 0.0);
     specularFactor = pow(specularFactor, SPECULAR_POWER);
-    specColor = specular * intensity * specularFactor * reflectance * vec4(lightCol, 1.0);
+    vec4 specColor = specular * intensity * specularFactor * reflectance * vec4(lightCol, 1.0);
 
     return (diffuseColor + specColor);
 }
